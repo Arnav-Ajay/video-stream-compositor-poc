@@ -1,180 +1,291 @@
-# ffmpeg-python
+# Video Stream Compositor (FFmpeg PoC)
 
-Developed/Tested on Elementary OS 5.1 Hera
-Python 3.6
+This repository contains a **proof-of-concept video stream compositor** built using **ffmpeg-python**.
 
-Worked/Tested with .mp4 and .webm files
+The project was developed during an internship to explore how multiple video and audio streams could be synchronized and composited into a single output stream.
 
-Clone the git repository:
+The original use case involved a **remote assistance system for industrial environments**, where technicians wearing smart glasses could stream video to remote subject-matter experts (SMEs). The system required the ability to combine multiple video feeds, overlays, and audio sources into a single synchronized output.
 
-	git clone https://github.com/Arnav-Ajay/ffmpeg.git
+This prototype demonstrates how **multiple media inputs can be aligned using timing metadata and merged into a composite output video**.
 
-Install the following:
+---
 
-	pip3 install ffmpeg-python --user
-	sudo apt-get install libavdevice57
-	sudo apt-get install ffmpeg
+# Overview
 
-To Run:
+The system merges multiple media inputs by reading a session configuration from a JSON file and constructing a timeline-based composition.
 
-	Create 3 empty folders inside the project directory, 'files', 'output', 'temp'.
+Each input file specifies:
 
-	Place all input files in ffmpeg/files/ directory.
+* start time
+* duration
+* whether audio/video components should be included
+* how the media should be processed
 
-	Make the required changes in ffmpeg/data.json file
+The pipeline then:
 
-Change background image from:
-	
-	ffmpeg/main.py, line 32
-	
-Select a perticular session by it's ID:
+1. Parses the session configuration
+2. Extracts audio and video components
+3. Aligns streams based on start times
+4. Composes video overlays for each time interval
+5. Mixes audio streams
+6. Produces a final merged video output
 
-	ffmpeg/main.py, line 10
+---
 
-from inside the project directory, type:
-		
-	python3 main.py
+# System Pipeline
 
-# Directory Structure
-	
-	├── data.json				#    Json file containing data of each session.
-	├── files				#    Directory containing all input files
-	│   ├── background.png
-	│   ├── vid1.mp4
-	│   ├── vid2.mp4
-	├── main.py				#    FFMPEG-Python Implementation
-	├── interface				#    Directory containing File and Session Interface
-	│   ├── fileinterface.py
-	│   ├── sessioninterface.py
-	|   └── timeline.py
-	├── output				#   Directory containing all output files 
-	│   ├── session1.mp4
-	├── preprocess.py			#    Support python file for fmpg.py
-	├── README.md
-	├── rules.py				#    Contains rules/format of how each vid/audio should be
-	├── temp				#   Directory containing all temp files, these get generated and deleted during run time
+```
+Input Media Files
+       ↓
+Session Configuration (data.json)
+       ↓
+Preprocessing & Timeline Segmentation
+       ↓
+Video Overlay Composition
+       ↓
+Audio Mixing
+       ↓
+Final Output Video
+```
 
-# data.json Format:
+---
 
-    {
-        "session1": {
-		"num_input" : 4,
-		"input_files": {
-            "file1" : {
-                "filename" : "LR1.mp4",
-                "filepath" : "./files/LR1.mp4",
-                "filetype" : "mp4",
-                "start_time" : 0,
-                "duration" : 240,
-                "audio_c" : true,
-                "video_c" : true,
-                "flag" : 0
-            },
-            "file2" : {
-                "filename" : "WB1.mp4",
-                "filepath" : "./files/WB1.mp4",
-                "filetype" : "mp4",
-                "start_time" : 45,
-                "duration" : 261,
-                "audio_c" : false,
-                "video_c" : true,
-                "flag" : 0
-            },
-            "file3" : {
-                "filename" : "vid1.mp4",
-                "filepath" : "./files/vid1.mp4",
-                "filetype" : "mp4",
-                "start_time" : 15,
-                "duration" : 30,
-                "audio_c" : true,
-                "video_c" : true,
-                "flag" : 2
-            },
-            "file4" : {
-                "filename" : "vid2.mp4",
-                "filepath" : "./files/vid2.mp4",
-                "filetype" : "mp4",
-                "start_time" : 20,
-                "duration" : 30,
-                "audio_c" : true,
-                "video_c" : true,
-                "flag" : 1
-            }
-		},
-        "duration" : 306
-        }
-        "session2":{
-	    	.
-	    	.
-	    	.
-        },
-	    .
-	    .
-	    .
-    }
+# Requirements
 
-# Preprocess.py
+Tested on:
 
-	get_data() : Fetches data from json file to File and Session Object
-	
-	get_smallest_st() : Returns the smallest start time in the session files
+* Elementary OS 5.1 Hera
+* Python 3.6
 
-	get_greatest_et() : Returns the gratest end time in the session files
+Dependencies:
 
-	get_audio_component() : Seperates Audio Component from input files
-	
-	get_video_component() : Seperates Video Component from input files
-	
-	check_num_audios() : Return mixed audio for no. of audios < 3. This is the first step of mixing audios together
-	
-	create_sub_output() : Returns list of overlaid video component of each time interval
+```
+pip install ffmpeg-python
+sudo apt-get install ffmpeg
+sudo apt-get install libavdevice57
+```
 
-	create_output() : Creates output for more than 1 input files
-	
-	empty_temp() : Deletes all files in Temp folder
-	
-# Rules.py
+---
 
-	convert_to_mono() : Converts all webm files and files containing audio to mono, mp4 format.
+# Running the Project
 
-	format_session() : Formats the input session w.r.t flag. returns a session object.
+Clone the repository:
 
-	get_dim() : Size of input file differs based of no. of inputs.
-	
-	get_cord() : Position of input file differs based of no. of inputs.
-	
-# Main.py
+```
+git clone https://github.com/Arnav-Ajay/ffmpeg.git
+cd ffmpeg
+```
 
-    check_num_running() : Returns no of files running at a perticular time
+Create the required directories:
 
-	get_running_files() : Returns a list of files running at a perticular time
+```
+mkdir files output temp
+```
 
-# Attributes of File Object
+Place input media files in:
 
-	filename : Name of File (String),
-	filepath : Path of File (String),
-	filetype : File Extension (String),
-	start_time : Time at which the video/ audio starts (in Seconds),
-	duration : Total duration of input file (in Seconds),
-	audio_c : Tells if input file has audio component (Boolean),
-	video_c : Tells if input file has Video component (Boolean),
-    flag : Ranges from 0 to 3. indicates which component to choose (Number)
-			0 : No changes
-			1 : Only audio component needed
-			2 : Only video component needed
-			3 : Skip file altogether(not required)
+```
+files/
+```
 
-	
-# Attributes of Session Object
+Edit the session configuration:
 
-	num_inputs : Number of input files (Number),
-	input_files : list of input files (List of File Object),
-	duration : Total duration of session (in Seconds)
+```
+data.json
+```
 
-# Attributes in Timeline Object
+Then run:
 
-	id : id of the time interval (Number)
-    start time : start time of the time interval (in Seconds)
-    duration : Total duration of of that time interval (in Seconds)
-	num_inputs : Number of input files (Number)
-    input_files : List of input files (List of File Object)
+```
+python3 main.py
+```
+
+The final merged video will be generated in:
+
+```
+output/
+```
+
+---
+
+# Project Structure
+
+```
+├── data.json               # Session configuration describing input media
+├── files/                  # Input media files
+│   ├── background.png
+│   ├── vid1.mp4
+│   ├── vid2.mp4
+│
+├── main.py                 # Entry point for the compositor
+├── preprocess.py           # Preprocessing and timeline generation
+├── rules.py                # Media formatting and layout rules
+│
+├── interface/
+│   ├── fileinterface.py    # File object abstraction
+│   ├── sessioninterface.py # Session object abstraction
+│   └── timeline.py         # Timeline interval structure
+│
+├── output/                 # Generated output videos
+├── temp/                   # Temporary processing files
+└── README.md
+```
+
+---
+
+# Session Configuration (`data.json`)
+
+Each session defines the set of media inputs and how they should be combined.
+
+Example structure:
+
+```json
+{
+  "session1": {
+    "num_input": 4,
+    "input_files": {
+      "file1": {
+        "filename": "LR1.mp4",
+        "filepath": "./files/LR1.mp4",
+        "filetype": "mp4",
+        "start_time": 0,
+        "duration": 240,
+        "audio_c": true,
+        "video_c": true,
+        "flag": 0
+      }
+    },
+    "duration": 306
+  }
+}
+```
+
+Key parameters:
+
+| Field        | Description                             |
+| ------------ | --------------------------------------- |
+| `start_time` | Time offset (seconds) when media begins |
+| `duration`   | Length of the media clip                |
+| `audio_c`    | Include audio component                 |
+| `video_c`    | Include video component                 |
+| `flag`       | Controls how media is processed         |
+
+Flag values:
+
+```
+0 → no change
+1 → audio only
+2 → video only
+3 → skip file
+```
+
+---
+
+# Core Modules
+
+## preprocess.py
+
+Handles session preparation and timeline generation.
+
+Functions include:
+
+* `get_data()` – Load session data from JSON
+* `get_smallest_st()` – Find earliest start time
+* `get_greatest_et()` – Find latest end time
+* `get_audio_component()` – Extract audio streams
+* `get_video_component()` – Extract video streams
+* `check_num_audios()` – Mix audio streams when needed
+* `create_sub_output()` – Generate video overlays for intervals
+* `create_output()` – Assemble final output video
+* `empty_temp()` – Clear temporary processing files
+
+---
+
+## rules.py
+
+Defines formatting and layout rules.
+
+Key functions:
+
+* `convert_to_mono()` – Convert audio streams to mono
+* `format_session()` – Normalize session configuration
+* `get_dim()` – Determine output resolution layout
+* `get_cord()` – Determine position of each video feed
+
+---
+
+## main.py
+
+Entry point for the application.
+
+Key functions:
+
+* `check_num_running()` – Number of streams active at a given time
+* `get_running_files()` – List active media files during an interval
+
+---
+
+# Data Model
+
+## File Object
+
+Represents an input media file.
+
+Attributes:
+
+```
+filename
+filepath
+filetype
+start_time
+duration
+audio_c
+video_c
+flag
+```
+
+---
+
+## Session Object
+
+Represents a composition session.
+
+Attributes:
+
+```
+num_inputs
+input_files
+duration
+```
+
+---
+
+## Timeline Object
+
+Represents a segment of the video timeline.
+
+Attributes:
+
+```
+id
+start_time
+duration
+num_inputs
+input_files
+```
+
+---
+
+# Status
+
+This repository contains an **early proof-of-concept developed during an internship in 2020**.
+
+The goal of the project was to validate the feasibility of synchronizing and compositing multiple video streams using FFmpeg.
+
+The implementation focuses on demonstrating the core pipeline rather than providing a production-ready system.
+
+---
+
+# License
+
+MIT License
