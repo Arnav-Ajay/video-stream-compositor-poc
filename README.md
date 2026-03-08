@@ -1,8 +1,8 @@
 # Video Stream Compositor (FFmpeg PoC)
 
-This repository contains a **proof-of-concept video stream compositor** built using **ffmpeg-python**.
+## Internship Project (2020)
 
-The project was developed during an internship to explore how multiple video and audio streams could be synchronized and composited into a single output stream.
+This project was developed during a software engineering internship as a proof-of-concept to explore multi-stream video composition using FFmpeg.
 
 The original use case involved a **remote assistance system for industrial environments**, where technicians wearing smart glasses could stream video to remote subject-matter experts (SMEs). The system required the ability to combine multiple video feeds, overlays, and audio sources into a single synchronized output.
 
@@ -72,8 +72,8 @@ sudo apt-get install libavdevice57
 Clone the repository:
 
 ```
-git clone https://github.com/Arnav-Ajay/ffmpeg.git
-cd ffmpeg
+git clone https://github.com/Arnav-Ajay/video-stream-compositor-poc.git
+cd video-stream-compositor-poc
 ```
 
 Create the required directories:
